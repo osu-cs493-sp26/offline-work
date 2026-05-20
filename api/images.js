@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import mime from 'mime-types'
 
 import prisma from '../lib/prisma.js'
+import { sendMsgToQueue } from '../lib/rabbitmq.js'
 
 const router = Router()
 
@@ -31,6 +32,7 @@ router.post('/', upload.single("image"), async (req, res, next) => {
             caption: req.body?.caption
         }
         const image = await prisma.image.create({ data: data })
+        await sendMsgToQueue("imageTags", Buffer.from(image.id.toString()))
         res.status(201).send({ id: image.id })
     } else {
         res.status(400).send({
